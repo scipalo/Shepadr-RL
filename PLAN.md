@@ -37,7 +37,14 @@ IMPLEMENTACIJA: Na podlagi taksija
 POTEK: Manjšanje epsilona (manj raziskovanja)
 
 LINKI:
+
 Video zbiranja ovc: https://www.youtube.com/watch?v=tDQw21ntR64
-Taksi (koda): https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.learndatasci.com%2Ftutorials%2Freinforcement-q-learning-scratch-python-openai-gym%2F%3Ffbclid%3DIwAR0flZORv0L11cg0s3JROhxwtdG3gfOT3hzikXiJuHOrR6b0RNj0tOlnJNUh=AT2dp1RNTSOxve-YqS98mE78Ti5sdprD77VkY4EbmqG5bwwDujaeCSfRCnkzDlrP2Plwql1B0YNhw1pxAwo9QG6eD74aXiD_kh_2LcLQJl_Ws5hR_zpmd8p3w4I9Ng 
-Gym environment github: https://github.com/buntyke/shepherd_gym/blob/master/README.md
-Our own environment: https://github.com/openai/gym/blob/master/docs/creating-environments.md
+Taksi (poganjanje primera): https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.learndatasci.com%2Ftutorials%2Freinforcement-q-learning-scratch-python-openai-gym%2F%3Ffbclid%3DIwAR0flZORv0L11cg0s3JROhxwtdG3gfOT3hzikXiJuHOrR6b0RNj0tOlnJNUh=AT2dp1RNTSOxve-YqS98mE78Ti5sdprD77VkY4EbmqG5bwwDujaeCSfRCnkzDlrP2Plwql1B0YNhw1pxAwo9QG6eD74aXiD_kh_2LcLQJl_Ws5hR_zpmd8p3w4I9Ng 
+
+Shepherd gym example: https://github.com/buntyke/shepherd_gym/blob/master/README.md
+Socer gym example: https://github.com/openai/gym-soccer
+Our own environment: 
+    https://github.com/openai/gym/blob/master/docs/creating-environments.md
+    https://stackoverflow.com/questions/45068568/how-to-create-a-new-gym-environment-in-openai
+Tutorial own environment: 
+    https://towardsdatascience.com/creating-a-custom-openai-gym-environment-for-stock-trading-be532be3910e
