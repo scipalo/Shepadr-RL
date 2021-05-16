@@ -1,0 +1,8 @@
+README.md
+setup.py
+gym_shepherd.egg-info/PKG-INFO
+gym_shepherd.egg-info/SOURCES.txt
+gym_shepherd.egg-info/dependency_links.txt
+gym_shepherd.egg-info/requires.txt
+gym_shepherd.egg-info/top_level.txt
+test/test_shepherd_env.py
