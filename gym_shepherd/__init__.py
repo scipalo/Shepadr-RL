@@ -1,10 +1,10 @@
 from gym.envs.registration import register
 
 register(
-    id='shepherd-v0',
-    entry_point='gym_shepherd.envs:FooEnv',
+    id='Shepherd-v0',
+    entry_point='gym_shepherd.envs.shepherd_env:ShepherdEnv',
 )
 register(
-    id='shepherd-extrahard-v0',
-    entry_point='gym_shepherd.envs:FooExtraHardEnv',
+    id='Shepherd-extrahard-v0',
+    entry_point='gym_shepherd.envs:ShepherdExtraHardEnv',
 )
