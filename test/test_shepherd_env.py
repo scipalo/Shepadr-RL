@@ -1,16 +1,17 @@
-import gym_shepherd
+from gym_shepherd.envs.shepherd_env import ShepherdEnv
 import gym
 import random
 import numpy as np
 
 #from IPython.display import clear_output
 
-"""Training the agent"""
+"""Training the agent""" 
 
-env = gym.make('Shepherd-v0').env
+env = gym.make('gym_shepherd.envs:Shepherd-v0')
 env.render()
 
 q_table = np.zeros([env.observation_space.n, env.action_space.n])
+print(q_table)
 
 # Hyperparameters
 
