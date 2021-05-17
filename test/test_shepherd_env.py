@@ -42,6 +42,7 @@ for i in range(1, 11):
             action = np.argmax(q_table[state]) # Exploit learned values
 
         next_state, reward, done, info = env.step(action) 
+        # print intuitive state (translate number to sth)
         print(info)
         
         old_value = q_table[state, action]

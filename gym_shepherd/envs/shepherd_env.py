@@ -22,6 +22,8 @@ class ShepherdEnv(gym.Env):
     def __init__(self):
 
         self.info_mode = 1
+        self.dog_influence = 2
+        self.dog_influence_rm = 5
 
         self.finish = False
         self.curr_episode = 0
@@ -65,7 +67,6 @@ class ShepherdEnv(gym.Env):
         
         success = False
 
-        # TODO (Nika) posodobi pozicijo psa
         self.current_step += 1
         self._take_action(action)
         
@@ -130,11 +131,13 @@ class ShepherdEnv(gym.Env):
 
     def _take_action(self, action):
         """Update position of dog based on action and env"""
-        # dog movement na podlagi akcije
-        # sheep movement
+        # dog movement & influenced sheep movement accordingly
+        self._take_action_dog(action)
+         # sheep movement (all sheep)
         self._update_environment()
 
     def _update_environment(self):
+
         """Update environment based on new position of dog"""
    
         state = self.herd
@@ -146,10 +149,10 @@ class ShepherdEnv(gym.Env):
         for ovca in state:
             (i, j) = ovca
 
-            #ali je blizu psa
+            # ali je blizu psa
             r_x = x-i
             r_y = y-j
-            if r_x**2+r_y**2<=25:
+            if r_x**2+r_y**2<=self.dog_influence_rm*self.dog_influence_rm:
                 ii = jj = 0
                 if abs(r_x)<abs(r_y):
                     if r_x>0:
@@ -205,3 +208,124 @@ class ShepherdEnv(gym.Env):
                             newState.append(ovca)
 
         self.herd = newState
+
+    def _take_action_dog(self, action):
+
+        """Return state based on action of the dog"""
+        
+        state = self.herd
+        (x, y) = self.dog
+        n = self.field_size
+
+        #prestavi se pes, če se lahko
+        if action==0:
+            if 0<=y+1<n: #gor
+                self.dog = (x, y+1)
+        elif action == 1:#desno
+            if 0<=x+1<n:
+                self.dog = (x+1, y)
+        elif action == 2: #dol
+            if 0<=y-1<n:
+                self.dog = (x, y-1)
+        elif action == 3: #levo
+            if 0<=x-1<n:
+                self.dog = (x-1,y)
+
+        Gor =[]
+        Dol = []
+        Levo = []
+        Desno = []
+
+        newSheep = []
+
+        (x,y) = self.dog #nism zihr, da je ta stranica potrebna  
+        for sheep in state:
+            (i, j) = sheep
+            if sheep in Gor:
+                if (i, j+1) not in newSheep:
+                    newSheep.append((i, j+1))
+                elif (i-1,j+1) not in newSheep:
+                    newSheep.append((i-1, j+1))
+                elif (i+1,j+1) not in newSheep:
+                    newSheep.append((i+1, j+1))
+                else:
+                    print("ta ovca nima več kam")
+            elif sheep in Dol:
+                if (i, j-1) not in newSheep:
+                    newSheep.append((i, j-1))
+                elif (i-1,j-1) not in newSheep:
+                    newSheep.append((i-1, j-1))
+                elif (i+1,j-1) not in newSheep:
+                    newSheep.append((i+1, j-1))
+                else:
+                    print("ta ovca nima več kam")
+            elif sheep in Levo:
+                if (i-1, j) not in newSheep:
+                    newSheep.append((i-1, j))
+                elif (i-1,j+1) not in newSheep:
+                    newSheep.append((i-1, j+1))
+                elif (i-1,j-1) not in newSheep:
+                    newSheep.append((i-1, j-1))
+                else:
+                    print("ta ovca nima več kam")
+
+            elif sheep in Desno:
+                if (i+1, j) not in newSheep:
+                    newSheep.append((i+1, j))
+                elif (i+1,j+1) not in newSheep:
+                    newSheep.append((i+1, j+1))
+                elif (i+1,j-1) not in newSheep:
+                    newSheep.append((i+1, j-1))
+                else:
+                    print("ta ovca nima več kam")
+            else:
+                if x-i==self.dog_influence: #pes je 2 desno od ovce
+                    if (i-1, j) in self.state:
+                        if (i-1, j-1) not in self.state:
+                            newSheep.append((i-1,j-1))
+                        elif (i-1, j+1) not in self.state:
+                            newSheep.append((i-1,j+1))
+                        else:
+                            Levo.append((i-1,j))
+                        newSheep.append((i-1,j))
+                    else: 
+                        newSheep.append((i-1,j))
+
+                
+                elif x-i==-self.dog_influence: #pes je 2 levo od ovce
+                    if (i+1, j) in self.state:
+                        if (i+1, j-1) not in self.state:
+                            newSheep.append((i+1,j-1))
+                        elif (i+1, j+1) not in self.state:
+                            newSheep.append((i+1,j+1))
+                        else:
+                            Desno.append((i+1,j))
+                            newSheep.append((i+1,j))
+                    else:
+                        newSheep.append((i+1,j))
+
+                if y-j==self.dog_influence: #pes je 2 gor od ovce
+                    if (i, j-1) in self.state:
+                        if (i-1, j-1) not in self.state:
+                            newSheep.append((i-1,j-1))
+                        elif (i+1, j-1) not in self.state:
+                            newSheep.append((i+1,j-1))
+                        else:
+                            Dol.append((i,j-1))
+                            newSheep.append((i,j-1))
+                    else:
+                        newSheep.append((i,j-1))
+
+                if y-j==-self.dog_influence: #pes je 2 dol od ovce
+                    if (i, j+1) in self.state:
+                        if (i-1, j+1) not in self.state:
+                            newSheep.append((i-1,j+1))
+                        elif (i+1, j+1) not in self.state:
+                            newSheep.append((i+1,j+1))
+                        else:
+                            Gor.append((i,j+1))
+                            newSheep.append((i,j+1))
+                    else:
+                        newSheep.append((i,j+1))
+
+        self.herd = newSheep
