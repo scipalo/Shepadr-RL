@@ -21,6 +21,8 @@ class ShepherdEnv(gym.Env):
 
     def __init__(self):
 
+        self.info_mode = 1
+
         self.finish = False
         self.curr_episode = 0
         self.current_step = 0
@@ -39,7 +41,7 @@ class ShepherdEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
         obs_low = np.array(3*[0])
         obs_high = np.ones(3)
-        self.observation_space = spaces.Box(low=obs_low, high=obs_high)
+        self.observation_space = spaces.Discrete(64) #spaces.Box(low=obs_low, high=obs_high)
         
     def step(self, action):
 
@@ -89,8 +91,9 @@ class ShepherdEnv(gym.Env):
         if self.info_mode == 1 and self.finish:
             info = {'r':self.episode_reward, 'l':self.episode_length, 's': success}
         else:
-            info = {'n':self.num_sheep, 's': success}
+            info = {'n':self.sheep_num, 's': success}
 
+        # ob je cifra
         return ob, reward, self.finish, info
 
     def reset(self):
@@ -119,7 +122,7 @@ class ShepherdEnv(gym.Env):
                     self.target_distance))
         return state
         """
-        return [0, 0.25, 0.5]
+        return 20
         
     def _get_reward(self):
             """Return reward based on action of the dog"""
@@ -127,6 +130,8 @@ class ShepherdEnv(gym.Env):
 
     def _take_action(self, action):
         """Update position of dog based on action and env"""
+        # dog movement na podlagi akcije
+        # sheep movement
         self._update_environment()
 
     def _update_environment(self):
