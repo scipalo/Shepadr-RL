@@ -6,5 +6,5 @@ register(
 )
 register(
     id='Shepherd-extrahard-v0',
-    entry_point='gym_shepherd.envs:ShepherdExtraHardEnv',
+    entry_point='gym_shepherd.envs.shepherd_extrahard_env:ShepherdExtraHardEnv',
 )

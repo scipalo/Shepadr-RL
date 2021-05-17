@@ -19,22 +19,22 @@ class ShepherdEnv(gym.Env):
 
         return herd, dog
 
-    def __init__(self, state):
+    def __init__(self):
 
-        
         self.finish = False
         self.curr_episode = 0
         self.current_step = 0
         self.episode_length = 0
         self.episode_reward = 0
 
+        self.sheep_num = 5
+        self.field_size = 20
+        self.herd, self.dog = self.init_sheep_table()
+
         self.max_num_of_steps = 1000 
         self.target_distance = 10
         self.calculated_distance = self.field_size*sqrt(2)
 
-        self.sheep_num = 5
-        self.field_size = 20
-        self.herd, self.dog = self.init_sheep_table()
 
         self.action_space = spaces.Discrete(4)
         obs_low = np.array(3*[0])

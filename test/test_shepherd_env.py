@@ -6,8 +6,13 @@ import numpy as np
 #from IPython.display import clear_output
 
 """Training the agent""" 
+from gym import envs
+print(envs.registry.all())
 
-env = gym.make('gym_shepherd.envs:Shepherd-v0')
+env = gym.make('gym_shepherd:Shepherd-v0')
+
+print()
+print(env)
 env.render()
 
 q_table = np.zeros([env.observation_space.n, env.action_space.n])
