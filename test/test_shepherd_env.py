@@ -29,7 +29,8 @@ epsilon = 0.1
 all_epochs = []
 all_penalties = []
 
-for i in range(1, 11):
+for i in range(1):
+
     state = env.reset()
    
     epochs, penalties, reward, = 0, 0, 0
@@ -43,7 +44,7 @@ for i in range(1, 11):
 
         next_state, reward, done, info = env.step(action) 
         # print intuitive state (translate number to sth)
-        print(info)
+        # print(info)
         
         old_value = q_table[state, action]
         next_max = np.max(q_table[next_state])
@@ -56,6 +57,9 @@ for i in range(1, 11):
 
         state = next_state
         epochs += 1
+
+        # render
+        ...
         
     if i % 100 == 0:
         #clear_output(wait=True)

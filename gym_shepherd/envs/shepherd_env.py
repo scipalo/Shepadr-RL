@@ -1,9 +1,11 @@
 import gym
 import random
-from reward import * 
+from gym import spaces
+
 import numpy as np
 from math import sqrt
-from gym import spaces
+from scipy.spatial import distance
+import matplotlib.pyplot as plt
 
 class ShepherdEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -13,10 +15,15 @@ class ShepherdEnv(gym.Env):
 
     def init_sheep_table (self):
 
-        sheep_x = random.sample(range(1, self.field_size), self.sheep_num)
-        sheep_y = random.sample(range(1, self.field_size), self.sheep_num)
-        herd = zip(sheep_x, sheep_y)
+        sheep_x = [random.choice(range(1, self.field_size)) for i in range(self.sheep_num)]
+        sheep_y = [random.choice(range(1, self.field_size)) for i in range(self.sheep_num)]
+        sheep_x.append(0)
+        sheep_y.append(0)
+        herd = list(set(zip(sheep_x, sheep_y)) )
+        self.sheep_num = len(herd)
         dog = (0,0)
+
+        print(herd)
 
         return herd, dog
 
@@ -32,8 +39,8 @@ class ShepherdEnv(gym.Env):
         self.episode_length = 0
         self.episode_reward = 0
 
-        self.sheep_num = 5
-        self.field_size = 20
+        self.sheep_num = 20
+        self.field_size = 10
         self.herd, self.dog = self.init_sheep_table()
 
         self.max_num_of_steps = 1000 
@@ -44,7 +51,8 @@ class ShepherdEnv(gym.Env):
         obs_low = np.array(3*[0])
         obs_high = np.ones(3)
         self.observation_space = spaces.Discrete(64) #spaces.Box(low=obs_low, high=obs_high)
-        
+
+ 
     def step(self, action):
 
         """
@@ -80,6 +88,10 @@ class ShepherdEnv(gym.Env):
             self.finish = True
 
         # good terminal conditions
+        
+        _, max_distance = self.dist_herd_center()
+        self.calculated_distance = max_distance
+
         if self.calculated_distance <= self.target_distance:
             print("calc dist: "+str(self.calculated_distance))
             print("tar dist: "+str(self.target_distance))
@@ -113,9 +125,6 @@ class ShepherdEnv(gym.Env):
         state = self._get_state()
         return state
 
-    def render(self, mode='human'):
-        ...
-
     def _get_state(self):
         """Return state based on action of the dog
            Stack all variables and return state array
@@ -129,7 +138,12 @@ class ShepherdEnv(gym.Env):
         
     def _get_reward(self):
             """Return reward based on action of the dog"""
-            return 0.1
+            # območja, ovca pes, ovca ovca
+            reward = self.areas() + \
+                     self.closenes_sheep_dog()  + \
+                     self.closenes_sheep_sheep()
+            print("Reward: "+ str(reward))
+            return reward
 
     def _take_action(self, action):
         """Update position of dog based on action and env"""
@@ -331,3 +345,157 @@ class ShepherdEnv(gym.Env):
                         newSheep.append((i,j+1))
 
         self.herd = newSheep
+
+    # REWARD
+
+    # funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
+    # vrne (x,y) kooridnato središča in najdaljšo izmed razdalj ovc do središča
+    def dist_herd_center(self):
+
+        herd = self.herd
+
+        seznam_x = list(map(lambda i: i[0], herd))
+        seznam_y = list(map(lambda i: i[1], herd))
+        x = sum(seznam_x)/len(seznam_x)
+        y = sum(seznam_y)/len(seznam_y)
+        center = (x,y)
+        distances = []
+        for i in range(len(herd)):        
+            distances.append(distance.euclidean(herd[i], center))
+        return center, max(distances)
+
+    # funkcija dist_herd_dog izračuna razdaljo vsake ovce do psa in vrne najkrajšo razdaljo
+    def dist_herd_dog(self):
+
+        herd = self.herd
+        dog = self.dog
+
+        distances = []
+        for i in range(len(herd)):        
+            distances.append(distance.euclidean(herd[i], dog))
+        return min(distances)
+
+
+    # funcija closenes_sheep_sheep sprejme seznam ovc, velikost polja in radij za ovce pri katerem je dosežen cilj
+    # vrne nagrado glede na stanje razpršenosti ovc (glede na to koliko je najdaljša razdalja ovce do njihovega središča)
+    # razpon vrednosti je (goal_radius, diagonala polja)
+    def closenes_sheep_sheep(self):
+
+        herd = self.herd
+        dog = self.dog
+        field_size = self.field_size
+        goal_radius = self.target_distance
+
+        h = (field_size*sqrt(2)-goal_radius)/4
+        center, max_distance = self.dist_herd_center()
+        max_distance = max_distance - goal_radius
+        if (max_distance >= 0 ) and (max_distance <= h):
+            reward = 1
+        elif (max_distance > h ) and (max_distance <= 2*h):
+            reward = 0.75
+        elif (max_distance > 2*h ) and (max_distance <= 3*h):
+            reward = 0.25
+        elif (max_distance > 3*h ) and (max_distance <= 4*h):
+            reward = 0
+        else:
+            reward = 100
+            print("Distance < 0, done.")
+
+        return reward
+
+    # funkcija closenes_sheep_dog sprejme seznam ovc, pozicijo psa, velikost polja in razdaljo pri kateri pes vpliva na ovce
+    # izračuna razdaljo psa do najbližje ovce in vrne temu primerno nagrado
+    # razpon je (dog_impact, diagonala polja)
+    def closenes_sheep_dog(self):
+
+        herd = self.herd
+        dog = self.dog
+        field_size = self.field_size
+        dog_impact = self.dog_influence
+
+        h = (field_size*sqrt(2)-dog_impact)/4
+        min_distance = self.dist_herd_dog()
+        min_distance = min_distance - dog_impact
+        if (min_distance > 0 ) and (min_distance <= h):
+            reward = 1
+        elif (min_distance > h ) and (min_distance <= 2*h):
+            reward = 0.75
+        elif (min_distance > 2*h ) and (min_distance <= 3*h):
+            reward = 0.25
+        elif (min_distance > 3*h ) and (min_distance <= 4*h):
+            reward = 0
+        else:
+            reward = 1
+            print("Dog can impact herd.")
+
+        return reward
+
+    # funkcija areas sprejme pozicije ovc in pozicijo psa ter prešteje v koliko območjih okoli psa se nahajajo ovce. 
+    # vrne nagrado glede na število območij.
+    def areas(self):
+
+        herd = self.herd
+        dog = self.dog
+        field_size = self.field_size
+
+        rewards = {1:1, 2:0.75, 3:0.25,4:0}
+        herd = list(map(lambda i: (i[0], field_size-i[1]), herd))
+        dog = (dog[0], field_size - dog[1])
+        point1 = (dog[0] + 1,dog[1]+1)
+        point2 = (dog[0] - 1,dog[1]+1)
+        seznam_up = []
+        seznam_down = []
+        seznam_left = []
+        seznam_right = []
+        nic = 0
+        #d=(x-x1)(y2-y1) - (y-y1)(x2-x1)
+        for i in herd: 
+            d1 = (i[0]-dog[0])*(point1[1]-dog[1]) - (i[1]-dog[1])*(point1[0]-dog[0])
+            d2 = (i[0]-dog[0])*(point2[1]-dog[1]) - (i[1]-dog[1])*(point2[0]-dog[0])
+            if (d1 < 0) and (d2 >= 0):
+                seznam_up.append(i)
+            elif (d1 >= 0) and (d2 > 0):
+                seznam_right.append(i)
+            elif (d1 > 0) and (d2 <= 0):
+                seznam_down.append(i)
+            elif (d1 <= 0) and (d2 < 0):
+                seznam_left.append(i)
+            else: nic += 1
+        seznam = [seznam_up, seznam_right, seznam_down, seznam_left]
+        no_of_areas = 0
+        for j in seznam:
+            if len(j) != 0:
+                no_of_areas += 1
+
+        print(no_of_areas)
+        reward = rewards[no_of_areas]
+
+        return reward
+
+    # RISANJE
+
+    def render(self, size=30, mode='human'):
+
+        # if not fig:
+        #     # create a figure
+        #     fig = plt.figure()
+        #     plt.ion()
+        #     plt.show()
+
+        herd = self.herd
+        dog = self.dog
+
+        plt.clf()
+        x = list(map(lambda x: x[0]*size, herd))
+        y = list(map(lambda x: x[1]*size, herd))
+        plt.scatter( dog[0],  dog[1], 
+                    c='r', s=50, label='Dog')
+        plt.scatter(x,  y, 
+                    c='b', s=50, label='Sheep')
+
+        plt.title('Shepherding')
+        plt.xlim([0, self.field_size*size])
+        plt.ylim([0, self.field_size*size])
+        plt.legend()
+        plt.draw()
+        plt.pause(0.5)

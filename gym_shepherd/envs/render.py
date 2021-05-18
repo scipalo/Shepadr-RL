@@ -2,17 +2,28 @@ from scipy.spatial import distance
 from math import sqrt
 import tkinter as tk
 from tkinter import *
-import reward
 import time
 
-"""
+
 # parametri
 herd = [(13, 10), (6, 14), (14, 1), (2, 7), (15, 16), (9, 5), (12, 12), (1, 8), (7, 19), (8, 2)]
 dog = (5,5)
 goal_radius = 1
 field_size = 20
 dog_impact = 5 #razdalja pri kateri pes vpliva na ovce
-"""
+
+# funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
+# vrne (x,y) kooridnato središča in najdaljšo izmed razdalj ovc do središča
+def dist_herd_center(herd):
+    seznam_x = list(map(lambda i: i[0], herd))
+    seznam_y = list(map(lambda i: i[1], herd))
+    x = sum(seznam_x)/len(seznam_x)
+    y = sum(seznam_y)/len(seznam_y)
+    center = (x,y)
+    distances = []
+    for i in range(len(herd)):        
+        distances.append(distance.euclidean(herd[i], center))
+    return center, max(distances)
 
 # RISANJE
 
@@ -82,5 +93,5 @@ def draw(herd, dog, canvas, size=30):
 
 
 # risanje
-# draw(herd,dog)
-# mainloop()
+draw(herd,dog)
+mainloop()
