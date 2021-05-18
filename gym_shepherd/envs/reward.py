@@ -1,8 +1,5 @@
 from scipy.spatial import distance
 from math import sqrt
-import tkinter as tk
-from tkinter import *
-import time
 
 # funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
 # vrne (x,y) kooridnato središča in najdaljšo izmed razdalj ovc do središča
@@ -69,7 +66,7 @@ def closenes_sheep_dog(herd, dog, field_size, dog_impact):
 
 # funkcija areas sprejme pozicije ovc in pozicijo psa ter prešteje v koliko območjih okoli psa se nahajajo ovce. 
 # vrne nagrado glede na število območij.
-def areas(herd, dog):
+def areas(herd, dog, field_size):
     rewards = {1:1, 2:0.75, 3:0.25,4:0}
     herd = list(map(lambda i: (i[0], field_size-i[1]), herd))
     dog = (dog[0], field_size - dog[1])
@@ -104,6 +101,7 @@ def areas(herd, dog):
     return reward
 
 # parametri
+"""
 herd = [(13, 10), (6, 14), (14, 1), (2, 7), (15, 16), (9, 5), (12, 12), (1, 8), (7, 19), (8, 2)]
 dog = (5,5)
 goal_radius = 1
@@ -112,72 +110,4 @@ dog_impact = 5 #razdalja pri kateri pes vpliva na ovce
 print(closenes_sheep_sheep(herd, field_size, goal_radius), "sheep-sheep")
 print(closenes_sheep_dog(herd, dog, field_size, dog_impact), "sheep-dog")
 print(areas(herd, dog),"areas")
-
-
-# RISANJE
-
-# pripravimo površino za risanje
-master = Tk()
-rows=field_size
-columns=field_size
-size=30     #velikost kvadratka
-color1="lightgreen" 
-color2 = "yellow"
-color3 = "brown"
-color4="green"
-canvas_width = columns * size
-canvas_height = rows * size
-canvas = tk.Canvas(borderwidth=0, highlightthickness=0,
-                                width=canvas_width, height=canvas_height, background="lightgreen")
-#canvas.pack(side="top", fill="both", expand=True, padx=2, pady=2)
-canvas.pack()
-
-
-# Narišemo kvadratke
-for row in range(rows):
-    for col in range(columns):
-        x1 = (col * size)
-        y1 = (row * size)
-        x2 = x1 + size
-        y2 = y1 + size
-        canvas.create_rectangle(x1, y1, x2, y2, outline=color4, fill=color1, tags="square")
-
-
-def draw(herd, dog):
-    #pobrišemo ovce in psa iz prejšnjega koraka
-    #canvas.delete("sheep")
-    #canvas.delete("dog")
-#narišemo ovce
-    for sheep in herd:
-        x1 = (sheep[0] *  size) 
-        y1 = (sheep[1] *  size)
-        x2 = x1 +  size
-        y2 = y1 +  size
-        canvas.create_oval(x1, y1, x2, y2, outline= color2, fill= color2, tags="sheep")
-#narišemo center ovc
-    c, seznam = dist_herd_center(herd)
-    x1 = (c[0] *  size) 
-    y1 = (c[1] *  size)
-    x2 = x1 +  size
-    y2 = y1 +  size
-    canvas.create_oval(x1, y1, x2, y2, outline= color2, fill= "black", tags="sheep")
-#narišemo psa
-    x1 = ( dog[0] *  size) 
-    y1 = ( dog[1] *  size)
-    x2 = x1 +  size
-    y2 = y1 +  size
-    canvas.create_oval(x1, y1, x2, y2, outline= color3, fill= color3, tags="dog")
-
-    # narišemo črte, da je lažje gledati koliko ovc je v katerem območju
-    # canvas.create_line( dog[0]*  size+  size/2,  dog[1]*  size+  size/2,  dog[0]*  size+10 *  size,  dog[1]*  size+10*  size)
-
-    # canvas.create_line( dog[0]*  size+  size/2,  dog[1]*  size+  size/2,  dog[0]*  size-10 *  size,  dog[1]*  size-10*  size)
-
-    # canvas.create_line( dog[0]*  size+  size/2,  dog[1]*  size+  size/2,  dog[0]*  size+10 *  size+  size/2,  dog[1]*  size-10*  size+  size/2)
-
-    # canvas.create_line( dog[0]*  size+  size/2,  dog[1]*  size+  size/2,  dog[0]*  size-10 *  size+  size/2,  dog[1]*  size+10*  size+  size/2)
-
-
-#risanje
-draw(herd,dog)
-mainloop()
+"""

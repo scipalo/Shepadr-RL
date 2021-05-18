@@ -1,5 +1,6 @@
 import gym
 import random
+from reward import * 
 import numpy as np
 from math import sqrt
 from gym import spaces
@@ -37,8 +38,7 @@ class ShepherdEnv(gym.Env):
 
         self.max_num_of_steps = 1000 
         self.target_distance = 10
-        self.calculated_distance = self.field_size*sqrt(2)
-
+        self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
         self.action_space = spaces.Discrete(4)
         obs_low = np.array(3*[0])
@@ -81,6 +81,8 @@ class ShepherdEnv(gym.Env):
 
         # good terminal conditions
         if self.calculated_distance <= self.target_distance:
+            print("calc dist: "+str(self.calculated_distance))
+            print("tar dist: "+str(self.target_distance))
             success = True
             self.finish = True
 
@@ -90,9 +92,9 @@ class ShepherdEnv(gym.Env):
 
         # generate info return parameter
         if self.info_mode == 1 and self.finish:
-            info = {'r':self.episode_reward, 'l':self.episode_length, 's': success}
+            info = {'rewrd':self.episode_reward, 'lenght':self.episode_length, 'success': success}
         else:
-            info = {'n':self.sheep_num, 's': success}
+            info = {'number of sheep':self.sheep_num, 'success': success}
 
         # ob je cifra
         return ob, reward, self.finish, info
@@ -127,7 +129,7 @@ class ShepherdEnv(gym.Env):
         
     def _get_reward(self):
             """Return reward based on action of the dog"""
-            return 0.25
+            return 0.1
 
     def _take_action(self, action):
         """Update position of dog based on action and env"""
@@ -280,10 +282,10 @@ class ShepherdEnv(gym.Env):
                     print("ta ovca nima več kam")
             else:
                 if x-i==self.dog_influence: #pes je 2 desno od ovce
-                    if (i-1, j) in self.state:
-                        if (i-1, j-1) not in self.state:
+                    if (i-1, j) in state:
+                        if (i-1, j-1) not in state:
                             newSheep.append((i-1,j-1))
-                        elif (i-1, j+1) not in self.state:
+                        elif (i-1, j+1) not in state:
                             newSheep.append((i-1,j+1))
                         else:
                             Levo.append((i-1,j))
@@ -293,10 +295,10 @@ class ShepherdEnv(gym.Env):
 
                 
                 elif x-i==-self.dog_influence: #pes je 2 levo od ovce
-                    if (i+1, j) in self.state:
-                        if (i+1, j-1) not in self.state:
+                    if (i+1, j) in state:
+                        if (i+1, j-1) not in state:
                             newSheep.append((i+1,j-1))
-                        elif (i+1, j+1) not in self.state:
+                        elif (i+1, j+1) not in state:
                             newSheep.append((i+1,j+1))
                         else:
                             Desno.append((i+1,j))
@@ -305,10 +307,10 @@ class ShepherdEnv(gym.Env):
                         newSheep.append((i+1,j))
 
                 if y-j==self.dog_influence: #pes je 2 gor od ovce
-                    if (i, j-1) in self.state:
-                        if (i-1, j-1) not in self.state:
+                    if (i, j-1) in state:
+                        if (i-1, j-1) not in state:
                             newSheep.append((i-1,j-1))
-                        elif (i+1, j-1) not in self.state:
+                        elif (i+1, j-1) not in state:
                             newSheep.append((i+1,j-1))
                         else:
                             Dol.append((i,j-1))
@@ -317,10 +319,10 @@ class ShepherdEnv(gym.Env):
                         newSheep.append((i,j-1))
 
                 if y-j==-self.dog_influence: #pes je 2 dol od ovce
-                    if (i, j+1) in self.state:
-                        if (i-1, j+1) not in self.state:
+                    if (i, j+1) in state:
+                        if (i-1, j+1) not in state:
                             newSheep.append((i-1,j+1))
-                        elif (i+1, j+1) not in self.state:
+                        elif (i+1, j+1) not in state:
                             newSheep.append((i+1,j+1))
                         else:
                             Gor.append((i,j+1))
