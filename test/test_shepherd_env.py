@@ -22,7 +22,7 @@ q_table = np.zeros([64, 4])
 
 alpha = 0.1
 gamma = 0.6
-epsilon = 0.1
+epsilon = 0.7
 
 # For plotting metrics
 
@@ -37,6 +37,7 @@ for i in range(1):
     done = False
     
     while not done:
+        epsilon = epsilon*0.95
         if random.uniform(0, 1) < epsilon:
             action = env.action_space.sample() # Explore action space
         else:
@@ -44,7 +45,7 @@ for i in range(1):
 
         next_state, reward, done, info = env.step(action) 
         # print intuitive state (translate number to sth)
-        # print(info)
+        print(info)
         
         old_value = q_table[state, action]
         next_max = np.max(q_table[next_state])
@@ -59,7 +60,7 @@ for i in range(1):
         epochs += 1
 
         # render
-        ...
+        env.render()
         
     if i % 100 == 0:
         #clear_output(wait=True)

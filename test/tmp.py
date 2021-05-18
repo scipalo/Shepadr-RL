@@ -31,3 +31,8 @@ obs_high = np.array(10*[1000.0])
 print(obs_low)
 ce = spaces.Box(low=obs_low, high=obs_high)
 print(ce)
+
+areas  = 0
+dog_sheep = 0.25 
+sheep_sheep = 0.75
+
