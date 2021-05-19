@@ -267,131 +267,87 @@ class ShepherdEnv(gym.Env):
 
     def _take_action_dog(self, action):
 
-        """Return state based on action of the dog"""
+        """Return state based on action of the dog"""        
         
-        state = self.herd
         (x, y) = self.dog
         n = self.field_size
 
         #prestavi se pes, če se lahko
         move_size = self.dog_move_size
+        is_move = False
+        
         if action==0:
             if 0<=y+move_size<n: #gor
                 self.dog = (x, y+move_size)
+                is_move = True
+            else:
+                self.dog = (x, y-move_size)
         elif action == 1:#desno
             if 0<=x+move_size<n:
                 self.dog = (x+move_size, y)
+                is_move = True
+            else:
+                self.dog = (x-move_size,y)
         elif action == 2: #dol
             if 0<=y-move_size<n:
                 self.dog = (x, y-move_size)
+                is_move = True
+            else:
+                self.dog = (x, y+move_size)
         elif action == 3: #levo
             if 0<=x-move_size<n:
                 self.dog = (x-move_size,y)
-
-        Gor =[]
-        Dol = []
-        Levo = []
-        Desno = []
-
-        newSheep = []
-
-        (x,y) = self.dog #nism zihr, da je ta stranica potrebna  
-        for sheep in state:
-            (i, j) = sheep
-            if sheep in Gor:
-                if (i, j+1) not in newSheep:
-                    newSheep.append((i, j+1))
-                elif (i-1,j+1) not in newSheep:
-                    newSheep.append((i-1, j+1))
-                elif (i+1,j+1) not in newSheep:
-                    newSheep.append((i+1, j+1))
-                else:
-                    print("ta ovca nima več kam")
-            elif sheep in Dol:
-                if (i, j-1) not in newSheep:
-                    newSheep.append((i, j-1))
-                elif (i-1,j-1) not in newSheep:
-                    newSheep.append((i-1, j-1))
-                elif (i+1,j-1) not in newSheep:
-                    newSheep.append((i+1, j-1))
-                else:
-                    print("ta ovca nima več kam")
-            elif sheep in Levo:
-                if (i-1, j) not in newSheep:
-                    newSheep.append((i-1, j))
-                elif (i-1,j+1) not in newSheep:
-                    newSheep.append((i-1, j+1))
-                elif (i-1,j-1) not in newSheep:
-                    newSheep.append((i-1, j-1))
-                else:
-                    print("ta ovca nima več kam")
-
-            elif sheep in Desno:
-                if (i+1, j) not in newSheep:
-                    newSheep.append((i+1, j))
-                elif (i+1,j+1) not in newSheep:
-                    newSheep.append((i+1, j+1))
-                elif (i+1,j-1) not in newSheep:
-                    newSheep.append((i+1, j-1))
-                else:
-                    print("ta ovca nima več kam")
+                is_move = True
             else:
-                if x-i==self.dog_influence: #pes je 2 desno od ovce
-                    if (i-1, j) in state:
-                        if (i-1, j-1) not in state:
-                            newSheep.append((i-1,j-1))
-                        elif (i-1, j+1) not in state:
-                            newSheep.append((i-1,j+1))
-                        else:
-                            Levo.append((i-1,j))
-                        newSheep.append((i-1,j))
-                    else: 
-                        newSheep.append((i-1,j))
+                self.dog = (x+move_size,y)
+        if is_move:
+            self.sheep_escape()
 
-                
-                elif x-i==-self.dog_influence: #pes je 2 levo od ovce
-                    if (i+1, j) in state:
-                        if (i+1, j-1) not in state:
-                            newSheep.append((i+1,j-1))
-                        elif (i+1, j+1) not in state:
-                            newSheep.append((i+1,j+1))
-                        else:
-                            Desno.append((i+1,j))
-                            newSheep.append((i+1,j))
-                    else:
-                        newSheep.append((i+1,j))
 
-                elif y-j==self.dog_influence: #pes je 2 gor od ovce
-                    if (i, j-1) in state:
-                        if (i-1, j-1) not in state:
-                            newSheep.append((i-1,j-1))
-                        elif (i+1, j-1) not in state:
-                            newSheep.append((i+1,j-1))
-                        else:
-                            Dol.append((i,j-1))
-                            newSheep.append((i,j-1))
-                    else:
-                        newSheep.append((i,j-1))
-
-                elif y-j==-self.dog_influence: #pes je 2 dol od ovce
-                    if (i, j+1) in state:
-                        if (i-1, j+1) not in state:
-                            newSheep.append((i-1,j+1))
-                        elif (i+1, j+1) not in state:
-                            newSheep.append((i+1,j+1))
-                        else:
-                            Gor.append((i,j+1))
-                            newSheep.append((i,j+1))
-                    else:
-                        newSheep.append((i,j+1))
+    def sheep_escape(self):
+        state = self.herd
+        dog = self.dog
+        n = self.field_size
+        newState = []
+        for sheep in state:
+            #print("sheep", sheep, state)
+            xx = sheep[0]
+            yy = sheep[1]
+            if distance.euclidean(sheep, dog) < self.dog_influence:
+                sheep_options = [(xx-1, yy-1), (xx-1,yy), (xx-1,yy+1),(xx,yy-1),(xx,yy+1),(xx+1,yy-1), (xx+1,yy),(xx+1,yy+1)]
+                sheep_options = self.clean_options(sheep_options)
+                if len(sheep_options)>0:
+                    dist_dog = list(map(lambda i: distance.euclidean(i, dog), sheep_options))
+                    m = max(dist_dog)
+                    #max_dist_dog = [j for j in dist_dog if j == m]
+                    max_dist_dog_i = [i for i, j in enumerate(dist_dog) if j == m]
+                    center,_ = self.dist_herd_center()
+                    d = { i: distance.euclidean(sheep_options[i], center)  for i in max_dist_dog_i}
+                    move =min(d, key=d.get) #indeks poteze v sheep_options
+                    newState.append(sheep_options[move])
                 else:
-                    newSheep.append((i,j))
+                    newState.append(sheep)
+            else:
+                newState.append(sheep)
+        self.herd = newState
+        
 
-        self.herd = newSheep
-        if self.sheep_num < len(self.herd):
-            print("Oh, no, I lost a sheep!! XD")
-            self.finish = True
-        self.sheep_num = len(self.herd)
+
+    def clean_options(self, sheep_options):
+        for option in sheep_options:
+            if option == self.dog:
+                sheep_options.remove(option)
+            elif option in self.herd:
+                sheep_options.remove(option)
+            elif not self.is_on_lawn(option):
+                sheep_options.remove(option)
+        return sheep_options
+            
+
+
+    def is_on_lawn(self, sheep):
+        x, y = sheep
+        return(0<=y<self.field_size and 0<=x<self.field_size)
 
     # REWARD
 
