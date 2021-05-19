@@ -35,4 +35,3 @@ print(ce)
 areas  = 0
 dog_sheep = 0.25 
 sheep_sheep = 0.75
-

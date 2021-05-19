@@ -48,3 +48,18 @@ Our own environment:
     https://stackoverflow.com/questions/45068568/how-to-create-a-new-gym-environment-in-openai
 Tutorial own environment: 
     https://towardsdatascience.com/creating-a-custom-openai-gym-environment-for-stock-trading-be532be3910e
+
+
+REZULTATI
+
+"""
+1.
+dolžina najdaljše vce do centra ovc ne pomaga nič
+spremenili smo v varianco ovc
+
+2.
+razdalja med najbližjo ovco in psom moivira, da nanje vpliva, ampak ne prinese rezultatov
+
+3.
+območj skrbijo, da se pes postavi v kot, da ima ovce le na dveh straneh, drugače n eprinese nič 
+"""

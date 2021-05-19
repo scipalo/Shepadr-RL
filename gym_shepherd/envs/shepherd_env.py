@@ -50,20 +50,18 @@ class ShepherdEnv(gym.Env):
         self.episode_reward = 0
         
         self.sheep_num = 100
-        self.field_size = 50
+        self.field_size = 60
         self.herd, self.dog = self.init_sheep_table()
 
-        self.dog_move_size = 2 
-        self.dog_influence = int(self.field_size/8)
-        self.dog_influence_rm = int(self.field_size/4)
+        self.dog_move_size = 3
+        self.dog_influence = int(self.field_size/6)
+        self.dog_influence_rm = int(self.field_size/3)
 
-        self.max_num_of_steps = 100
+        self.max_num_of_steps = 250
         self.target_distance = int(sqrt(self.sheep_num)) + 2
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
-        self.action_space = spaces.Discrete(4)
-        obs_low = np.array(3*[0])
-        obs_high = np.ones(3)
+        self.action_space = spaces.Discrete(8)
         self.observation_space = spaces.Discrete(64) #spaces.Box(low=obs_low, high=obs_high)
 
  
@@ -170,22 +168,12 @@ class ShepherdEnv(gym.Env):
         print(state_trans)
 
         return state_trans
-        
-    def _get_reward(self):
-            """Return reward based on action of the dog"""
-            # območja, ovca pes, ovca ovca
-            dog_sheep = self.closenes_sheep_dog() 
-            sheep_sheep = self.closenes_sheep_sheep()
-            reward = 0.25 * dog_sheep + sheep_sheep
-            print("Reward: "+ str(0.25 * dog_sheep) +" "+ str(sheep_sheep))
-            return reward
 
     def _take_action(self, action):
         """Update position of dog based on action and env"""
         # dog movement & influenced sheep movement accordingly
         self._take_action_dog(action)
-        self._take_action_dog(action)
-         # sheep movement (all sheep)
+        # sheep movement (all sheep)
         self._update_environment()
 
     # RISANJE
@@ -214,9 +202,19 @@ class ShepherdEnv(gym.Env):
         plt.ylim([0, self.field_size*size])
         #plt.legend()
         plt.draw()
-        plt.pause(0.05)
+        plt.pause(0.001)
 
     # REWARD
+
+    def _get_reward(self):
+        """Return reward based on action of the dog"""
+        # območja, ovca pes, ovca ovca
+        areas = self.areas()
+        dog_sheep = self.closenes_sheep_dog() 
+        sheep_sheep = self.closenes_sheep_sheep()
+        reward = 0 * areas + 0.5 * dog_sheep + 0 * sheep_sheep
+        print("Reward: "+ str(areas) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
+        return reward
 
     # funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
     # vrne (x,y) kooridnato središča in najdaljšo izmed razdalj ovc do središča
@@ -235,6 +233,27 @@ class ShepherdEnv(gym.Env):
             distances.append(distance.euclidean(herd[i], center))
 
         return center, max(distances)
+
+    def std_dev_herd_center(self):
+
+        herd = self.herd
+        goal_radius = self.target_distance
+
+        seznam_x = list(map(lambda i: i[0], herd))
+        seznam_y = list(map(lambda i: i[1], herd))
+        x = sum(seznam_x)/len(seznam_x)
+        y = sum(seznam_y)/len(seznam_y)
+        center = (x,y)
+        distances = []
+
+        for i in range(len(herd)):        
+            distances.append(distance.euclidean(herd[i], center))
+
+        std_dev = sum(distances)/len(distances)
+        std_dev_normalised = min( max(0, std_dev - goal_radius) / (self.field_size*sqrt(2)/3), 1) 
+
+        return center, std_dev_normalised
+
 
     # funkcija dist_herd_dog izračuna razdaljo vsake ovce do psa in vrne najkrajšo razdaljo
     def dist_herd_dog(self):
@@ -256,7 +275,7 @@ class ShepherdEnv(gym.Env):
         field_size = self.field_size
         goal_radius = self.target_distance
 
-         # continum
+         # continum max radius
 
         max_radius = field_size*sqrt(2)/2
         center, max_sheep_radius = self.dist_herd_center()
@@ -264,6 +283,11 @@ class ShepherdEnv(gym.Env):
 
         reward = 1 - (max_sheep_radius/max_radius)
         # reward = 1/(max_sheep_radius/max_radius)
+
+        # continum std dev
+
+        _, std_dev_sheep_radius = self.std_dev_herd_center()
+        reward = 1 - std_dev_sheep_radius
 
         if type == 'continuous':
             return reward
@@ -298,6 +322,10 @@ class ShepherdEnv(gym.Env):
         h = (field_size*sqrt(2)-dog_impact)/4
         min_distance = self.dist_herd_dog()
         min_distance = min_distance - dog_impact
+        #center, _ = self.dist_herd_center()
+        #dog_center_dist = distance.euclidean(center, self.dog)
+
+                
 
         if (min_distance > 0 ) and (min_distance <= h):
             reward = 1
@@ -354,6 +382,7 @@ class ShepherdEnv(gym.Env):
 
         return reward
 
+    # TAKE ACTION functions
 
     def _update_environment(self):
 
@@ -464,10 +493,34 @@ class ShepherdEnv(gym.Env):
             else:
                 self.dog = (x+move_size,y)
                 action = (action + 2 ) % 4
+        # diagonale
+        elif action == 5: #levo gor
+            if 0<=x-move_size and y+move_size <n:
+                self.dog = (x-move_size,y+move_size)
+            else:
+                self.dog = (x+move_size,y-move_size)
+                action = 7
+        elif action == 6: #levo dol
+            if 0<=x-move_size and y-move_size<n:
+                self.dog = (x-move_size,y-move_size)
+            else:
+                self.dog = (x+move_size,y+move_size)
+                action = 8
+        elif action == 7: #desno gor
+            if 0<=x+move_size and y+move_size<n:
+                self.dog = (x+move_size,y+move_size)
+            else:
+                self.dog = (x-move_size,y-move_size)
+                action = 5
+        elif action == 8: #desno dol
+            if 0<=x+move_size and y-move_size<n:
+                self.dog = (x+move_size,y-move_size)
+            else:
+                self.dog = (x-move_size,y+move_size)
+                action = 6
         
         self.sheep_escape()
         return action
-
 
     def sheep_escape(self):
         state = self.herd

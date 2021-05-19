@@ -16,29 +16,30 @@ env = gym.make('gym_shepherd:Shepherd-v0')
 env.render()
 
 #q_table = np.zeros([env.observation_space.n, env.action_space.n])
-q_table = np.zeros([64, 4])
+q_table = np.zeros([64, 8])
 
 # Hyperparameters
 
-alpha = 0.1
-gamma = 0.6
-epsilon = 0.8
+alpha = 0.3 # 0.1
+gamma = 0.6 #
+epsilon = 0.7
 
 # For plotting metrics
 
 all_epochs = []
 all_penalties = []
 
-for i in range(1):
+for i in range(10):
 
     state = env.reset()
    
     epochs, penalties, reward, = 0, 0, 0
     done = False
     count = 0
+    epsilon = epsilon*0.8
+    print("EPSILON", epsilon)
     
     while not done:
-        #epsilon = epsilon*0.95
         
         if random.uniform(0, 1) < epsilon:
             action = env.action_space.sample() # Explore action space
