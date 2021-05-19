@@ -10,3 +10,7 @@ How to use environment:
 import gym
 import gym_shepherd
 env = gym.make('Shepherd-v0')
+
+Due to the fast approaching deadline for school asignment some unoptimised and confusing code lines were added in the end.
+Thank you for understanding :) 
+
