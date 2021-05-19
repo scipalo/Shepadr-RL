@@ -16,7 +16,7 @@ env = gym.make('gym_shepherd:Shepherd-v0')
 env.render()
 
 #q_table = np.zeros([env.observation_space.n, env.action_space.n])
-q_table = np.zeros([64, 8])
+q_table = np.zeros([128, 8])
 
 # Hyperparameters
 
@@ -29,23 +29,24 @@ epsilon = 0.7
 all_epochs = []
 all_penalties = []
 
-for i in range(10):
+for i in range(1):
 
     state = env.reset()
    
     epochs, penalties, reward, = 0, 0, 0
     done = False
     count = 0
-    epsilon = epsilon*0.8
+    epsilon = epsilon*0.93
     print("EPSILON", epsilon)
     
     while not done:
         
         if random.uniform(0, 1) < epsilon:
-            action = env.action_space.sample() # Explore action space
+            action = random.randint(0,7) # Explore action space
         else:
             action = np.argmax(q_table[state]) # Exploit learned values
 
+        print("ACTION",action)
         action, next_state, reward, done, info = env.step(action) 
         # print intuitive state (translate number to sth)
         print(info)
@@ -73,6 +74,8 @@ for i in range(10):
         #clear_output(wait=True)
         print(f"Episode: {i}")
 
+
 print(q_table)
+np.savetxt('test/qtable.txt', q_table, delimiter=',')
 
 print("Training finished.\n")

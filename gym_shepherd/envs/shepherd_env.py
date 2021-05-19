@@ -20,7 +20,7 @@ class ShepherdEnv(gym.Env):
         #.discard((0,0))
         herd = list(set(zip(sheep_x, sheep_y)))
         self.sheep_num = len(herd)
-        dog = (20,20)
+        dog = (0,0)
 
         #print(herd)
 
@@ -29,10 +29,11 @@ class ShepherdEnv(gym.Env):
     def state_translation_fun(self):
 
         zf = [1, 2, 3, 4]
-        states = [ i*100 + j*10 + k for i in zf for j in zf for k in zf]
+        zzf = [1,2,3,4,5,6,7,8]
+        states = [ i*100 + j*10 + k for i in zzf for j in zf for k in zf]
         #print(states[1:15])
         
-        d = { states[i] : i  for i in range(64)}
+        d = { states[i] : i  for i in range(128)}
         #print(d)
 
         return d
@@ -53,16 +54,16 @@ class ShepherdEnv(gym.Env):
         self.field_size = 60
         self.herd, self.dog = self.init_sheep_table()
 
-        self.dog_move_size = 3
-        self.dog_influence = int(self.field_size/6)
-        self.dog_influence_rm = int(self.field_size/3)
+        self.dog_move_size = 5
+        self.dog_influence = int(self.field_size/4)
+        self.dog_influence_rm = int(self.field_size/4)
 
-        self.max_num_of_steps = 250
+        self.max_num_of_steps = 6
         self.target_distance = int(sqrt(self.sheep_num)) + 2
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
         self.action_space = spaces.Discrete(8)
-        self.observation_space = spaces.Discrete(64) #spaces.Box(low=obs_low, high=obs_high)
+        self.observation_space = spaces.Discrete(128) #spaces.Box(low=obs_low, high=obs_high)
 
  
     def step(self, action):
@@ -149,12 +150,11 @@ class ShepherdEnv(gym.Env):
                     self.target_distance))
         return state
         """
-        areas  = self.areas() * 4
-        dog_sheep = self.closenes_sheep_dog() * 4
+        #areas  = self.areas() * 4
+        dog_direction = self.dog_direction() # vrača 1-8
+        dog_sheep = self.closenes_sheep_dog('discrete') * 4
         sheep_sheep = self.closenes_sheep_sheep('discrete') * 4
 
-        if areas < 2:
-            areas += 1
         if dog_sheep < 2:
             dog_sheep += 1
         if sheep_sheep <2:
@@ -162,19 +162,48 @@ class ShepherdEnv(gym.Env):
 
         #print([areas,dog_sheep,sheep_sheep])
         
-        state = areas * 100 + dog_sheep * 10 + sheep_sheep
+        state = dog_direction * 100 + dog_sheep * 10 + sheep_sheep
         state_trans = self.state_translation_dict[state] 
         print("new state: ", end=" ")
         print(state_trans)
 
         return state_trans
+    
+    def dog_direction(self):
 
-    def _take_action(self, action):
-        """Update position of dog based on action and env"""
-        # dog movement & influenced sheep movement accordingly
-        self._take_action_dog(action)
-        # sheep movement (all sheep)
-        self._update_environment()
+        dog = self.dog
+        herd = self.herd
+               
+        obmocje = 0
+        center, _ = self.dist_herd_center()
+        point1 = (center[0] + 2,center[1]+1)
+        point2 = (center[0] + 1,center[1]+2)
+        point3 = (center[0] - 1,center[1]+2)
+        point4 = (center[0] - 2,center[1]+1)
+        #d=(x-x1)(y2-y1) - (y-y1)(x2-x1)
+        for i in herd: 
+            d1 = (dog[0]-center[0])*(point1[1]-center[1]) - (dog[1]-center[1])*(point1[0]-center[0])
+            d2 = (dog[0]-center[0])*(point2[1]-center[1]) - (dog[1]-center[1])*(point2[0]-center[0])
+            d3 = (dog[0]-center[0])*(point3[1]-center[1]) - (dog[1]-center[1])*(point3[0]-center[0])
+            d4 = (dog[0]-center[0])*(point4[1]-center[1]) - (dog[1]-center[1])*(point4[0]-center[0])
+            if (d1 > 0) and (d2 > 0) and (d3 > 0) and (d4 >= 0):
+                obmocje = 1
+            elif (d1 <= 0) and (d2 > 0) and (d3 > 0) and (d4 > 0):
+                obmocje = 2
+            elif (d1 < 0) and (d2 <= 0) and (d3 > 0) and (d4 > 0):
+                obmocje = 3
+            elif (d1 < 0) and (d2 < 0) and (d3 <= 0) and (d4 > 0):
+                obmocje = 4
+            elif (d1 < 0) and (d2 < 0) and (d3 < 0) and (d4 <= 0):
+                obmocje = 5
+            elif (d1 >= 0) and (d2 < 0) and (d3 < 0) and (d4 < 0):
+                obmocje = 6
+            elif (d1 > 0) and (d2 >= 0) and (d3 < 0) and (d4 < 0):
+                obmocje = 7
+            elif (d1 > 0) and (d2 > 0) and (d3 >= 0) and (d4 < 0):
+                obmocje = 8
+        
+        return obmocje 
 
     # RISANJE
 
@@ -202,18 +231,18 @@ class ShepherdEnv(gym.Env):
         plt.ylim([0, self.field_size*size])
         #plt.legend()
         plt.draw()
-        plt.pause(0.001)
+        plt.pause(0.00001)
 
     # REWARD
 
     def _get_reward(self):
         """Return reward based on action of the dog"""
         # območja, ovca pes, ovca ovca
-        areas = self.areas()
+        dog_direction = self.dog_direction()
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
-        reward = 0.2 * areas + 0.5 * dog_sheep + 1 * sheep_sheep
-        print("Reward: "+ str(areas) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
+        reward = 1 * dog_sheep + 0.7 * sheep_sheep
+        print("Reward: "+ str(dog_direction) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
         return reward
 
     # funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
@@ -250,7 +279,9 @@ class ShepherdEnv(gym.Env):
             distances.append(distance.euclidean(herd[i], center))
 
         std_dev = sum(distances)/len(distances)
-        std_dev_normalised = min( max(0, std_dev - goal_radius) / (self.field_size*sqrt(2)/3), 1) 
+        
+        std_dev_normalised = min( max(0, std_dev - goal_radius) / (self.field_size*sqrt(2)/6), 1) 
+        #print("KOLOKOL",std_dev_normalised)
 
         return center, std_dev_normalised
 
@@ -281,13 +312,14 @@ class ShepherdEnv(gym.Env):
         center, max_sheep_radius = self.dist_herd_center()
         max_sheep_radius = max_sheep_radius - goal_radius
 
-        reward = 1 - (max_sheep_radius/max_radius)
+        # reward = 1 - (max_sheep_radius/max_radius)
         # reward = 1/(max_sheep_radius/max_radius)
 
         # continum std dev
 
         _, std_dev_sheep_radius = self.std_dev_herd_center()
         reward = 1 - std_dev_sheep_radius
+        reward = reward*reward
 
         if type == 'continuous':
             return reward
@@ -307,14 +339,13 @@ class ShepherdEnv(gym.Env):
         else:
             reward = 100
             print("Distance < 0, done.")
-        
-
+    
         return reward
 
     # funkcija closenes_sheep_dog sprejme seznam ovc, pozicijo psa, velikost polja in razdaljo pri kateri pes vpliva na ovce
     # izračuna razdaljo psa do najbližje ovce in vrne temu primerno nagrado
     # razpon je (dog_impact, diagonala polja)
-    def closenes_sheep_dog(self):
+    def closenes_sheep_dog_min(self, type='continuous'):
 
         field_size = self.field_size
         dog_impact = self.dog_influence
@@ -322,10 +353,11 @@ class ShepherdEnv(gym.Env):
         h = (field_size*sqrt(2)-dog_impact)/4
         min_distance = self.dist_herd_dog()
         min_distance = min_distance - dog_impact
-        #center, _ = self.dist_herd_center()
-        #dog_center_dist = distance.euclidean(center, self.dog)
 
-                
+        # distance to center
+        center, _ = self.dist_herd_center()
+        dog_center_dist = distance.euclidean(center, self.dog)
+        rew = 1 - dog_center_dist/(self.field_size*sqrt(2)/2)
 
         if (min_distance > 0 ) and (min_distance <= h):
             reward = 1
@@ -339,7 +371,45 @@ class ShepherdEnv(gym.Env):
             reward = 1
             print("Dog can impact herd.")
 
-        return reward
+        print("REW", rew)
+        if type == 'continuous':
+            return reward + rew*10
+
+        return reward 
+
+    def closenes_sheep_dog(self, type='continuous'):
+
+        field_size = self.field_size
+        dog_impact = self.dog_influence
+
+        # distance to center
+        h = (field_size*sqrt(2)-dog_impact)/8
+        center, _ = self.dist_herd_center()
+        dog_center_dist = distance.euclidean(center, self.dog)
+        d = dog_center_dist
+
+        #print("HHHHHH",h,"dcd",dog_center_dist)
+
+        if (d > 0 ) and (d <= h):
+            reward = 1
+        elif (d > h ) and (d <= 2*h):
+            reward = 0.75
+        elif (d > 2*h ) and (d <= 3*h):
+            reward = 0.25
+        elif (d > 3*h ) and (d <= 4*h):
+            reward = 0
+        else:
+            reward = 1
+            print("Dog can impact herd.")
+
+        rew = 1 - min(max(dog_center_dist-dog_impact, 0)/(self.field_size*sqrt(2)/3), 1)
+        rew = rew*rew
+
+        #print("REW", rew, "state", reward)
+        if type == 'continuous':
+            return rew
+
+        return reward 
 
     # funkcija areas sprejme pozicije ovc in pozicijo psa ter prešteje v koliko območjih okoli psa se nahajajo ovce. 
     # vrne nagrado glede na število območij.
@@ -384,78 +454,12 @@ class ShepherdEnv(gym.Env):
 
     # TAKE ACTION functions
 
-    def _update_environment(self):
-
-        """Update environment based on new position of dog"""
-   
-        state = self.herd
-        pes = self.dog
-        n = self.field_size
-
-        newState = []
-        (x, y) = pes
-        for ovca in state:
-            (i, j) = ovca
-
-            # ali je blizu psa
-            r_x = x-i
-            r_y = y-j
-            if r_x**2+r_y**2<=self.dog_influence_rm*self.dog_influence_rm:
-                ii = jj = 0
-                if abs(r_x)<abs(r_y):
-                    if r_x>0:
-                        ii = 1
-                    else:
-                        ii = -1
-                else:
-                    if r_y>0:
-                        jj = 1
-                    else:
-                        jj = -1
-                
-                
-                if (i +ii, j +jj) not in newState and 0<=i+ii<=n and 0<=j+jj<=n:
-                    newState.append((i +ii, j +jj))
-                else:
-                    if ii == 0:
-                        if (i +ii + 1, j +jj) not in newState and 0<=i+ii +1<=n and 0<=j+jj<=n:
-                            newState.append((i +ii +1, j +jj))
-                        elif (i +ii -1, j +jj) not in newState and 0<=i+ii-1<=n and 0<=j+jj<=n:
-                            newState.append((i +ii -1, j +jj))
-                        else:
-                            newState.append(ovca)
-                    else:
-                        if (i +ii, j +jj +1) not in newState and 0<=i+ii<=n and 0<=j+jj+1<=n:
-                            newState.append((i +ii, j +jj +1))
-                        elif (i +ii, j +jj -1) not in newState and 0<=i+ii<=n and 0<=j+jj-1<=n:
-                            newState.append((i +ii, j +jj -1))
-                        else:
-                            newState.append(ovca)
-            else:
-                a=random.randint(-1,1)
-                if a>0: #gor dol
-                    b = random.randint(-1,1)
-                    if (i, j +b) not in newState and 0<=j+b<=n:
-                            newState.append((i, j +b))
-                    elif (i - 1, j + b) not in newState and 0<=j+b<=n and 0<=i-1<=n:
-                            newState.append((i-1, j +b))
-                    elif (i + 1, j + b) not in newState and 0<=j+b<=n and 0<=i+1<=n:
-                            newState.append((i+1, j +b))
-                    else:
-                            newState.append(ovca)
-                
-                else:
-                    b = random.randint(-1,1)
-                    if (i +b , j) not in newState and 0<=i+b<=n:
-                            newState.append((i + b, j))
-                    elif (i+b, j + 1) not in newState and 0<=i+b<=n and 0<=j+1<=n:
-                            newState.append((i+b, j +1))
-                    elif (i + b, j - 1) not in newState and 0<=i+b<=n and 0<=j-1<=n:
-                            newState.append((i+b, j -1))
-                    else:
-                            newState.append(ovca)
-
-        self.herd = newState
+    def _take_action(self, action):
+        """Update position of dog based on action and env"""
+        # dog movement & influenced sheep movement accordingly
+        self._take_action_dog(action)
+        # sheep movement (all sheep)
+        self.fake_random()
 
     def _take_action_dog(self, action):
 
@@ -550,17 +554,61 @@ class ShepherdEnv(gym.Env):
 
         self.herd = newState
 
-    def clean_options(self, sheep_options):
-        for option in sheep_options:
-            if option == self.dog:
-                sheep_options.remove(option)
-            elif option in self.herd:
-                sheep_options.remove(option)
-            elif not self.is_on_lawn(option):
-                sheep_options.remove(option)
-        return sheep_options
-
     def is_on_lawn(self, sheep):
         x, y = sheep
         return(0<=y<self.field_size and 0<=x<self.field_size)
+
+    def clean_options(self, sheep_options):
+        cleared_sheep_options = []
+        for option in sheep_options:
+            if option == self.dog:
+                pass
+            elif option in self.herd:
+                pass
+            elif not self.is_on_lawn(option):
+               pass
+                #print("PADE DOL", option)
+            else:
+                cleared_sheep_options.append(option)
+
+        return cleared_sheep_options
+
+    def sheep_move_to_center(self, sheep):
+        xx = sheep[0]
+        yy = sheep[1]
+        sheep_options = [(xx-1, yy-1), (xx-1,yy), (xx-1,yy+1),(xx,yy-1),(xx,yy+1),(xx+1,yy-1), (xx+1,yy),(xx+1,yy+1)]
+        sheep_options = self.clean_options(sheep_options)
+        if len(sheep_options)>0:
+            center,_ = self.dist_herd_center()
+            dist_to_center = list(map(lambda x: distance.euclidean(center,x),sheep_options))
+            new_position = np.argmin(dist_to_center)
+
+            return sheep_options[new_position]
+
+        else:
+            return sheep
+
+    def sheep_move_random(self, sheep):
+        xx = sheep[0]
+        yy = sheep[1]
+        sheep_options = [(xx-1, yy-1), (xx-1,yy), (xx-1,yy+1),(xx,yy-1),(xx,yy+1),(xx+1,yy-1), (xx+1,yy),(xx+1,yy+1)]
+        sheep_options = self.clean_options(sheep_options)
+
+        if len(sheep_options)>0:
+            new_position_idx = random.randint(0,len(sheep_options)-1)
+            return sheep_options[new_position_idx]
+        else:
+            return sheep
+
+    def fake_random(self):
+        herd = self.herd
+        new_herd = []
+        e = 0.03
+        for i in range(len(herd)):
+            if random.uniform(0, 1) < e:
+                new_herd.append(self.sheep_move_to_center(herd[i]))
+            else:
+                new_herd.append(self.sheep_move_random(herd[i]))
+        
+        self.herd = new_herd
 

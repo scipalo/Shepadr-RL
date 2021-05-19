@@ -62,4 +62,5 @@ razdalja med najbližjo ovco in psom moivira, da nanje vpliva, ampak ne prinese 
 
 3.
 območj skrbijo, da se pes postavi v kot, da ima ovce le na dveh straneh, drugače n eprinese nič 
+spremenili smo v osem smernih vektorjev (dog, center) da dobimo relacijo s smerjo in premikanjem psa
 """
