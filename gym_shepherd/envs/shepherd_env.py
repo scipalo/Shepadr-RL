@@ -212,7 +212,7 @@ class ShepherdEnv(gym.Env):
         areas = self.areas()
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
-        reward = 0 * areas + 0.5 * dog_sheep + 0 * sheep_sheep
+        reward = 0.2 * areas + 0.5 * dog_sheep + 1 * sheep_sheep
         print("Reward: "+ str(areas) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
         return reward
 
