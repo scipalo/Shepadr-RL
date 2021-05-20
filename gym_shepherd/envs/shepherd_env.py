@@ -318,39 +318,22 @@ class ShepherdEnv(gym.Env):
        
         return rew_disc
 
+    # distance dog to center of sheep
     def closenes_sheep_dog(self, type='continuous'):
 
-        field_size = self.field_size
         dog_impact = self.dog_influence
-
-        # distance to center
-        h = (field_size*sqrt(2)-dog_impact)/8
         center, _ = self.dist_herd_center()
         dog_center_dist = distance.euclidean(center, self.dog)
-        d = dog_center_dist
 
-        #print("HHHHHH",h,"dcd",dog_center_dist)
+        rew = 1 - min(max(dog_center_dist - dog_impact, 0)/(self.field_size*sqrt(2)/3), 1)
+        rew_pow = rew*rew
+        rew_disc = round(rew_pow * 4)/4
 
-        if (d > 0 ) and (d <= h):
-            reward = 1
-        elif (d > h ) and (d <= 2*h):
-            reward = 0.75
-        elif (d > 2*h ) and (d <= 3*h):
-            reward = 0.25
-        elif (d > 3*h ) and (d <= 4*h):
-            reward = 0
-        else:
-            reward = 1
-            #print("Dog can impact herd.")
-
-        rew = 1 - min(max(dog_center_dist-dog_impact, 0)/(self.field_size*sqrt(2)/3), 1)
-        rew = rew*rew
-
-        #print("REW", rew, "state", reward)
+        #print("REW", rew_disc, rew_pow)
         if type == 'continuous':
-            return rew
+            return rew_pow
 
-        return reward 
+        return rew_disc 
 
     # funkcija areas sprejme pozicije ovc in pozicijo psa ter prešteje v koliko območjih okoli psa se nahajajo ovce. 
     # vrne nagrado glede na število območij.
