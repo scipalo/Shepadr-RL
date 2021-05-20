@@ -231,7 +231,7 @@ class ShepherdEnv(gym.Env):
         plt.ylim([0, self.field_size*size])
         #plt.legend()
         plt.draw()
-        plt.pause(1)
+        plt.pause(0.001)
 
     # REWARD
 
@@ -280,11 +280,7 @@ class ShepherdEnv(gym.Env):
             distances.append(distance.euclidean(herd[i], center))
 
         std_dev = sum(distances)/len(distances)
-        
-        std_dev_normalised = min( max(0, std_dev - goal_radius) / (self.field_size*sqrt(2)/6), 1) 
-        #print("KOLOKOL",std_dev_normalised)
-
-        return center, std_dev_normalised
+        return center, std_dev
 
 
     # funkcija dist_herd_dog izračuna razdaljo vsake ovce do psa in vrne najkrajšo razdaljo
@@ -304,79 +300,23 @@ class ShepherdEnv(gym.Env):
     # razpon vrednosti je (goal_radius, diagonala polja)
     def closenes_sheep_sheep(self, type='continuous'):
 
-        field_size = self.field_size
         goal_radius = self.target_distance
-
-         # continum max radius
-
-        max_radius = field_size*sqrt(2)/2
-        center, max_sheep_radius = self.dist_herd_center()
-        max_sheep_radius = max_sheep_radius - goal_radius
-
-        # reward = 1 - (max_sheep_radius/max_radius)
-        # reward = 1/(max_sheep_radius/max_radius)
 
         # continum std dev
 
-        _, std_dev_sheep_radius = self.std_dev_herd_center()
-        reward = 1 - std_dev_sheep_radius
-        reward = reward*reward
+        _, std_dev_sheep_center = self.std_dev_herd_center()
+        std_dev_normalised = min( max(0, std_dev_sheep_center - goal_radius) / (self.field_size*sqrt(2)/2), 1) 
+
+        reward = 1 - std_dev_normalised
+        rew_pow = reward*reward
+        rew_disc = round(rew_pow * 4)/4
+
+        #print("HHHHH", rew_disc, rew_pow)
 
         if type == 'continuous':
-            return reward
+            return rew_pow
        
-        # dicrete
-        
-        h = (field_size*sqrt(2)-goal_radius)/6
-        max_distance = max_sheep_radius - goal_radius
-        if (max_distance >= 0 ) and (max_distance <= h):
-            reward = 1
-        elif (max_distance > h ) and (max_distance <= 2*h):
-            reward = 0.75
-        elif (max_distance > 2*h ) and (max_distance <= 3*h):
-            reward = 0.25
-        elif (max_distance > 3*h ) and (max_distance <= 4*h):
-            reward = 0
-        else:
-            reward = 100
-            print("Distance < 0, done.")
-    
-        return reward
-
-    # funkcija closenes_sheep_dog sprejme seznam ovc, pozicijo psa, velikost polja in razdaljo pri kateri pes vpliva na ovce
-    # izračuna razdaljo psa do najbližje ovce in vrne temu primerno nagrado
-    # razpon je (dog_impact, diagonala polja)
-    def closenes_sheep_dog_min(self, type='continuous'):
-
-        field_size = self.field_size
-        dog_impact = self.dog_influence
-
-        h = (field_size*sqrt(2)-dog_impact)/4
-        min_distance = self.dist_herd_dog()
-        min_distance = min_distance - dog_impact
-
-        # distance to center
-        center, _ = self.dist_herd_center()
-        dog_center_dist = distance.euclidean(center, self.dog)
-        rew = 1 - dog_center_dist/(self.field_size*sqrt(2)/2)
-
-        if (min_distance > 0 ) and (min_distance <= h):
-            reward = 1
-        elif (min_distance > h ) and (min_distance <= 2*h):
-            reward = 0.75
-        elif (min_distance > 2*h ) and (min_distance <= 3*h):
-            reward = 0.25
-        elif (min_distance > 3*h ) and (min_distance <= 4*h):
-            reward = 0
-        else:
-            reward = 1
-            #print("Dog can impact herd.")
-
-        print("REW", rew)
-        if type == 'continuous':
-            return reward + rew*10
-
-        return reward 
+        return rew_disc
 
     def closenes_sheep_dog(self, type='continuous'):
 
