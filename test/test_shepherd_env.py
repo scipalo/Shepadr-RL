@@ -20,24 +20,27 @@ q_table = np.zeros([128, 8])
 
 # Hyperparameters
 
-alpha = 0.3 # 0.1
+alpha = 0.1
 gamma = 0.6 #
-epsilon = 0.7
+epsilon = 0.95
 
 # For plotting metrics
 
+done = False
 all_epochs = []
 all_penalties = []
 
-for i in range(1):
+for i in range(1000):
+
+    if i % 100 == 0:
+        print("EPISODE",i-1,"Epsilon", epsilon, done)
 
     state = env.reset()
    
     epochs, penalties, reward, = 0, 0, 0
     done = False
+    epsilon = epsilon*0.9978
     count = 0
-    epsilon = epsilon*0.93
-    print("EPSILON", epsilon)
     
     while not done:
         
@@ -46,10 +49,11 @@ for i in range(1):
         else:
             action = np.argmax(q_table[state]) # Exploit learned values
 
-        print("ACTION",action)
+        #print("ACTION",action)
         action, next_state, reward, done, info = env.step(action) 
         # print intuitive state (translate number to sth)
-        print(info)
+        
+        #print(info)
         
         old_value = q_table[state, action]
         next_max = np.max(q_table[next_state])
@@ -64,15 +68,10 @@ for i in range(1):
         epochs += 1
 
         # render
-        env.render()
-
         count += 1
-        if count%100 == 0:
-            print("Epsilon", epsilon)
+        if count % 1000 == 0:
+            env.render()            
         
-    if i % 100 == 0:
-        #clear_output(wait=True)
-        print(f"Episode: {i}")
 
 
 print(q_table)

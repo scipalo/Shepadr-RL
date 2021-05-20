@@ -58,7 +58,7 @@ class ShepherdEnv(gym.Env):
         self.dog_influence = int(self.field_size/4)
         self.dog_influence_rm = int(self.field_size/4)
 
-        self.max_num_of_steps = 6
+        self.max_num_of_steps = 6000
         self.target_distance = int(sqrt(self.sheep_num)) + 2
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
@@ -89,7 +89,7 @@ class ShepherdEnv(gym.Env):
         success = False
 
         self.current_step += 1
-        print(str(self.curr_episode)+" "+str(self.current_step))
+        # print(str(self.curr_episode)+" "+str(self.current_step))
         
         action = self._take_action(action)
         
@@ -164,8 +164,8 @@ class ShepherdEnv(gym.Env):
         
         state = dog_direction * 100 + dog_sheep * 10 + sheep_sheep
         state_trans = self.state_translation_dict[state] 
-        print("new state: ", end=" ")
-        print(state_trans)
+        # print("new state: ", end=" ")
+        # print(state_trans)
 
         return state_trans
     
@@ -231,7 +231,7 @@ class ShepherdEnv(gym.Env):
         plt.ylim([0, self.field_size*size])
         #plt.legend()
         plt.draw()
-        plt.pause(0.00001)
+        plt.pause(1)
 
     # REWARD
 
@@ -242,7 +242,8 @@ class ShepherdEnv(gym.Env):
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
         reward = 1 * dog_sheep + 0.7 * sheep_sheep
-        print("Reward: "+ str(dog_direction) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
+        if self.current_step % 1000 == 0:
+            print("Reward: "+ str(dog_direction) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
         return reward
 
     # funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
@@ -369,7 +370,7 @@ class ShepherdEnv(gym.Env):
             reward = 0
         else:
             reward = 1
-            print("Dog can impact herd.")
+            #print("Dog can impact herd.")
 
         print("REW", rew)
         if type == 'continuous':
@@ -400,7 +401,7 @@ class ShepherdEnv(gym.Env):
             reward = 0
         else:
             reward = 1
-            print("Dog can impact herd.")
+            #print("Dog can impact herd.")
 
         rew = 1 - min(max(dog_center_dist-dog_impact, 0)/(self.field_size*sqrt(2)/3), 1)
         rew = rew*rew
