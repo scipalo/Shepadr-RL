@@ -53,14 +53,24 @@ Tutorial own environment:
 REZULTATI
 
 """
-1.
+1. std dev (sheep sheep)
 dolžina najdaljše vce do centra ovc ne pomaga nič
-spremenili smo v varianco ovc
 
-2.
+        # continum max radius (not working)
+
+        # center, max_sheep_radius = self.dist_herd_center()
+        # max_sheep_radius = max_sheep_radius - goal_radius
+        # max_radius = field_size*sqrt(2)/2
+        # reward = 1 - (max_sheep_radius/max_radius)
+        # reward = 1/(max_sheep_radius/max_radius)
+
+spremenili smo v VARIANCO ovc oddaljenosti od centra
+
+2. (dog sheep) oddaljenost od centra ovc
+
 razdalja med najbližjo ovco in psom moivira, da nanje vpliva, ampak ne prinese rezultatov
+spremenili smo v oddaljenost od centra ovc
 
-3.
+3. smeri 
 območj skrbijo, da se pes postavi v kot, da ima ovce le na dveh straneh, drugače n eprinese nič 
-spremenili smo v osem smernih vektorjev (dog, center) da dobimo relacijo s smerjo in premikanjem psa
-"""
+spremenili smo v osem smernih vektorjev (dog, center) da dobimo relacijo s med pozicijo centra in psa in s tem spreminjanje smeri

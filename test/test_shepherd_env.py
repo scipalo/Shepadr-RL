@@ -26,14 +26,13 @@ epsilon = 0.95
 
 # For plotting metrics
 
-done = False
+info = {'success':False}
 all_epochs = []
 all_penalties = []
 
-for i in range(1000):
+for i in range(100):
 
-    if i % 100 == 0:
-        print("EPISODE",i-1,"Epsilon", epsilon, done)
+    print("EPISODE",i-1,"Epsilon", epsilon, info["success"])
 
     state = env.reset()
    
@@ -69,7 +68,7 @@ for i in range(1000):
 
         # render
         count += 1
-        if count % 1000 == 0:
+        if count % 998 == 0:
             env.render()            
         
 

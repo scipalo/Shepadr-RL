@@ -50,7 +50,7 @@ class ShepherdEnv(gym.Env):
         self.episode_length = 0
         self.episode_reward = 0
         
-        self.sheep_num = 100
+        self.sheep_num = 70
         self.field_size = 60
         self.herd, self.dog = self.init_sheep_table()
 
@@ -58,8 +58,8 @@ class ShepherdEnv(gym.Env):
         self.dog_influence = int(self.field_size/4)
         self.dog_influence_rm = int(self.field_size/4)
 
-        self.max_num_of_steps = 6000
-        self.target_distance = int(sqrt(self.sheep_num)) + 2
+        self.max_num_of_steps = 3000
+        self.target_distance = int((int(sqrt(self.sheep_num)) + 1)/2)+1
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
         self.action_space = spaces.Discrete(8)
@@ -94,7 +94,6 @@ class ShepherdEnv(gym.Env):
         action = self._take_action(action)
         
         # get reward and state 
-        # TODO state return 
         ob = self._get_state()
         reward = self._get_reward()
 
@@ -150,7 +149,6 @@ class ShepherdEnv(gym.Env):
                     self.target_distance))
         return state
         """
-        #areas  = self.areas() * 4
         dog_direction = self.dog_direction() # vrača 1-8
         dog_sheep = self.closenes_sheep_dog('discrete') * 4
         sheep_sheep = self.closenes_sheep_sheep('discrete') * 4
@@ -160,8 +158,6 @@ class ShepherdEnv(gym.Env):
         if sheep_sheep <2:
             sheep_sheep += 1
 
-        #print([areas,dog_sheep,sheep_sheep])
-        
         state = dog_direction * 100 + dog_sheep * 10 + sheep_sheep
         state_trans = self.state_translation_dict[state] 
         # print("new state: ", end=" ")
@@ -238,13 +234,25 @@ class ShepherdEnv(gym.Env):
     def _get_reward(self):
         """Return reward based on action of the dog"""
         # območja, ovca pes, ovca ovca
+        in_house = self.in_house()
         dog_direction = self.dog_direction()
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
-        reward = 1 * dog_sheep + 0.7 * sheep_sheep
-        if self.current_step % 1000 == 0:
-            print("Reward: "+ str(dog_direction) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
+        reward = in_house + 0.8 * dog_sheep + sheep_sheep
+        if self.current_step % 998 == 0:
+            print("Reward: "+ str(in_house) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
         return reward
+
+
+    def in_house(self):
+    
+        center, _ = self.std_dev_herd_center()
+        dist = distance.euclidean(center, (self.field_size*0.25,self.field_size*0.25))
+        max_distance = self.field_size*sqrt(2)
+
+        #print("CCC", dist/max_distance)
+        return dist/max_distance
+        
 
     # funkcija dist_herd_center sprejme položaj ovc in izračuna njihovo središče
     # vrne (x,y) kooridnato središča in najdaljšo izmed razdalj ovc do središča
@@ -282,37 +290,19 @@ class ShepherdEnv(gym.Env):
         std_dev = sum(distances)/len(distances)
         return center, std_dev
 
-
-    # funkcija dist_herd_dog izračuna razdaljo vsake ovce do psa in vrne najkrajšo razdaljo
-    def dist_herd_dog(self):
-
-        herd = self.herd
-        dog = self.dog
-
-        distances = []
-        for i in range(len(herd)):        
-            distances.append(distance.euclidean(herd[i], dog))
-        return min(distances)
-
-
-    # funcija closenes_sheep_sheep sprejme seznam ovc, velikost polja in radij za ovce pri katerem je dosežen cilj
-    # vrne nagrado glede na stanje razpršenosti ovc (glede na to koliko je najdaljša razdalja ovce do njihovega središča)
-    # razpon vrednosti je (goal_radius, diagonala polja)
     def closenes_sheep_sheep(self, type='continuous'):
-
-        goal_radius = self.target_distance
 
         # continum std dev
 
+        goal_radius = self.target_distance
         _, std_dev_sheep_center = self.std_dev_herd_center()
-        std_dev_normalised = min( max(0, std_dev_sheep_center - goal_radius) / (self.field_size*sqrt(2)/2), 1) 
+        std_dev_normalised = min( max(0, std_dev_sheep_center - goal_radius) / (self.field_size*sqrt(2)/6), 1) 
 
         reward = 1 - std_dev_normalised
         rew_pow = reward*reward
         rew_disc = round(rew_pow * 4)/4
 
         #print("HHHHH", rew_disc, rew_pow)
-
         if type == 'continuous':
             return rew_pow
        
@@ -334,47 +324,6 @@ class ShepherdEnv(gym.Env):
             return rew_pow
 
         return rew_disc 
-
-    # funkcija areas sprejme pozicije ovc in pozicijo psa ter prešteje v koliko območjih okoli psa se nahajajo ovce. 
-    # vrne nagrado glede na število območij.
-    def areas(self):
-
-        herd = self.herd
-        dog = self.dog
-        field_size = self.field_size
-
-        rewards = {1:1, 2:0.75, 3:0.25,4:0}
-        herd = list(map(lambda i: (i[0], field_size-i[1]), herd))
-        dog = (dog[0], field_size - dog[1])
-        point1 = (dog[0] + 1,dog[1]+1)
-        point2 = (dog[0] - 1,dog[1]+1)
-        seznam_up = []
-        seznam_down = []
-        seznam_left = []
-        seznam_right = []
-        nic = 0
-        #d=(x-x1)(y2-y1) - (y-y1)(x2-x1)
-        for i in herd: 
-            d1 = (i[0]-dog[0])*(point1[1]-dog[1]) - (i[1]-dog[1])*(point1[0]-dog[0])
-            d2 = (i[0]-dog[0])*(point2[1]-dog[1]) - (i[1]-dog[1])*(point2[0]-dog[0])
-            if (d1 < 0) and (d2 >= 0):
-                seznam_up.append(i)
-            elif (d1 >= 0) and (d2 > 0):
-                seznam_right.append(i)
-            elif (d1 > 0) and (d2 <= 0):
-                seznam_down.append(i)
-            elif (d1 <= 0) and (d2 < 0):
-                seznam_left.append(i)
-            else: nic += 1
-        seznam = [seznam_up, seznam_right, seznam_down, seznam_left]
-        no_of_areas = 0
-        for j in seznam:
-            if len(j) != 0:
-                no_of_areas += 1
-
-        reward = rewards[no_of_areas]
-
-        return reward
 
     # TAKE ACTION functions
 
