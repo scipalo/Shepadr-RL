@@ -58,7 +58,7 @@ class ShepherdEnv(gym.Env):
         self.dog_influence = int(self.field_size/4)
         self.dog_influence_rm = int(self.field_size/4)
 
-        self.max_num_of_steps = 1500
+        self.max_num_of_steps = 1000
         self.target_distance = int((int(sqrt(self.sheep_num)) + 1)/2)+1
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
@@ -239,9 +239,9 @@ class ShepherdEnv(gym.Env):
         dog_direction = self.dog_direction()
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
-        reward = 0.5 * in_house + 0.2 * dog_sheep + sheep_sheep
+        reward = 0.1 * in_house + 0.1 * dog_sheep + sheep_sheep
         if self.current_step % 499 == 0:
-            print("Reward: "+ str(in_house) +" "+ str(dog_sheep) +" "+ str(sheep_sheep)+"-> "+ str(reward))
+            print("Reward: "+ str(0.1 *in_house) +" "+ str(0.1 *dog_sheep) +" "+ str(sheep_sheep)+"-> "+ str(reward))
         return reward
 
 

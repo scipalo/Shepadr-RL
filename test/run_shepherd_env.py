@@ -16,13 +16,14 @@ env = gym.make('gym_shepherd:Shepherd-v0')
 env.render()
 
 #q_table = np.zeros([env.observation_space.n, env.action_space.n])
+# TODO: read table
 q_table = np.zeros([128, 8])
 
 # Hyperparameters
 
 alpha = 0.2
 gamma = 0.6 #
-epsilon = 0.97
+epsilon = 0
 eps = epsilon
 
 # For plotting metrics
@@ -45,9 +46,7 @@ for i in range(100):
     while not done:
         
         eps = epsilon
-        if i < 65:
-            eps = sqrt(epsilon)
-
+    
         if random.uniform(0, 1) < eps:
             action = random.randint(0,7) # Explore action space
         else:
@@ -74,10 +73,8 @@ for i in range(100):
 
         # render
         count += 1
-        if count % 499 == 0:
+        if count % 1 == 0:
             env.render()            
-        
-
 
 print(q_table)
 np.savetxt('test/qtable.txt', q_table, delimiter=',')
