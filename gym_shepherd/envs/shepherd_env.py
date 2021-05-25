@@ -58,7 +58,7 @@ class ShepherdEnv(gym.Env):
         self.dog_influence = int(self.field_size/4)
         self.dog_influence_rm = int(self.field_size/4)
 
-        self.max_num_of_steps = 3000
+        self.max_num_of_steps = 1500
         self.target_distance = int((int(sqrt(self.sheep_num)) + 1)/2)+1
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
@@ -89,7 +89,7 @@ class ShepherdEnv(gym.Env):
         success = False
 
         self.current_step += 1
-        # print(str(self.curr_episode)+" "+str(self.current_step))
+        # print(str(self.curr_episode)+" "+str(self.current_step),end="")
         
         action = self._take_action(action)
         
@@ -238,9 +238,9 @@ class ShepherdEnv(gym.Env):
         dog_direction = self.dog_direction()
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
-        reward = in_house + 0.8 * dog_sheep + sheep_sheep
-        if self.current_step % 998 == 0:
-            print("Reward: "+ str(in_house) +" "+ str(dog_sheep) +" "+ str(sheep_sheep))
+        reward = 0.5 * in_house + 0.2 * dog_sheep + sheep_sheep
+        if self.current_step % 499 == 0:
+            print("Reward: "+ str(in_house) +" "+ str(dog_sheep) +" "+ str(sheep_sheep)+"-> "+ str(reward))
         return reward
 
 
@@ -296,7 +296,7 @@ class ShepherdEnv(gym.Env):
 
         goal_radius = self.target_distance
         _, std_dev_sheep_center = self.std_dev_herd_center()
-        std_dev_normalised = min( max(0, std_dev_sheep_center - goal_radius) / (self.field_size*sqrt(2)/6), 1) 
+        std_dev_normalised = min( max(0, std_dev_sheep_center - goal_radius) / (self.field_size*sqrt(2)/5), 1) 
 
         reward = 1 - std_dev_normalised
         rew_pow = reward*reward
@@ -330,9 +330,10 @@ class ShepherdEnv(gym.Env):
     def _take_action(self, action):
         """Update position of dog based on action and env"""
         # dog movement & influenced sheep movement accordingly
-        self._take_action_dog(action)
+        action = self._take_action_dog(action)
         # sheep movement (all sheep)
         self.fake_random()
+        return action
 
     def _take_action_dog(self, action):
 
@@ -370,31 +371,32 @@ class ShepherdEnv(gym.Env):
             else:
                 self.dog = (x+move_size,y)
                 action = (action + 2 ) % 4
+
         # diagonale
-        elif action == 5: #levo gor
-            if 0<=x-move_size and y+move_size <n:
+        elif action == 1: #levo gor
+            if 0<=x-move_size<n and 0<=y+move_size <n:
                 self.dog = (x-move_size,y+move_size)
             else:
                 self.dog = (x+move_size,y-move_size)
-                action = 7
-        elif action == 6: #levo dol
-            if 0<=x-move_size and y-move_size<n:
-                self.dog = (x-move_size,y-move_size)
-            else:
-                self.dog = (x+move_size,y+move_size)
-                action = 8
-        elif action == 7: #desno gor
-            if 0<=x+move_size and y+move_size<n:
-                self.dog = (x+move_size,y+move_size)
-            else:
-                self.dog = (x-move_size,y-move_size)
-                action = 5
-        elif action == 8: #desno dol
-            if 0<=x+move_size and y-move_size<n:
-                self.dog = (x+move_size,y-move_size)
-            else:
-                self.dog = (x-move_size,y+move_size)
                 action = 6
+        elif action == 5: #levo dol
+            if 0<=x-move_size<n and 0<=y-move_size<n:
+                self.dog = (x-move_size,y-move_size)
+            else:
+                self.dog = (x+move_size,y+move_size)
+                action = 7
+        elif action == 6: #desno gor
+            if 0<=x+move_size<n and 0<=y+move_size<n:
+                self.dog = (x+move_size,y+move_size)
+            else:
+                self.dog = (x-move_size,y-move_size)
+                action = 4
+        elif action == 7: #desno dol
+            if 0<=x+move_size<n and 0<=y-move_size<n:
+                self.dog = (x+move_size,y-move_size)
+            else:
+                self.dog = (x-move_size,y+move_size)
+                action = 5
         
         self.sheep_escape()
         return action

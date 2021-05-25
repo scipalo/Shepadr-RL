@@ -22,7 +22,7 @@ q_table = np.zeros([128, 8])
 
 alpha = 0.1
 gamma = 0.6 #
-epsilon = 0.95
+epsilon = 0.97
 
 # For plotting metrics
 
@@ -37,8 +37,8 @@ for i in range(100):
     state = env.reset()
    
     epochs, penalties, reward, = 0, 0, 0
+    epsilon = epsilon*0.992
     done = False
-    epsilon = epsilon*0.9978
     count = 0
     
     while not done:
@@ -59,6 +59,7 @@ for i in range(100):
         
         new_value = (1 - alpha) * old_value + alpha * (reward + gamma * next_max)
         q_table[state, action] = new_value
+        #print("Action", action, q_table[state])
 
         if reward == -10:
             penalties += 1
@@ -68,7 +69,7 @@ for i in range(100):
 
         # render
         count += 1
-        if count % 998 == 0:
+        if count % 499 == 0:
             env.render()            
         
 
