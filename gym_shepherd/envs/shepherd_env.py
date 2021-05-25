@@ -374,7 +374,7 @@ class ShepherdEnv(gym.Env):
                 action = (action + 2 ) % 4
 
         # diagonale
-        elif action == 1: #levo gor
+        elif action == 4: #levo gor
             if 0<=x-move_size<n and 0<=y+move_size <n:
                 self.dog = (x-move_size,y+move_size)
             else:
