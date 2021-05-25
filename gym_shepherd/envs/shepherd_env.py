@@ -219,9 +219,10 @@ class ShepherdEnv(gym.Env):
         y = list(map(lambda x: x[1]*size, herd))
         plt.scatter( dog[0]*size,  dog[1]*size, 
                     c='r', s=50, label='Dog')
+        plt.scatter( self.field_size*0.25*size,self.field_size*0.25*size, 
+                    c='y', s=50, label='Dog')
         plt.scatter(x,  y, 
                     c='b', s=50, label='Sheep')
-
         plt.title('Shepherding')
         plt.xlim([0, self.field_size*size])
         plt.ylim([0, self.field_size*size])
