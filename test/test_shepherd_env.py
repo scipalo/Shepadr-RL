@@ -18,6 +18,7 @@ env.render()
 
 #q_table = np.zeros([env.observation_space.n, env.action_space.n])
 q_table = np.zeros([128, 8])
+q_normalize = np.ones([128, 8])
 
 # Hyperparameters
 
@@ -44,7 +45,7 @@ for i in range(100):
     epsilon = epsilon*0.97
     done = False
     count = 0
-    
+
     while not done:
         
         eps = epsilon
@@ -54,7 +55,7 @@ for i in range(100):
         if random.uniform(0, 1) < eps:
             action = random.randint(0,7) # Explore action space
         else:
-            action = np.argmax(q_table[state]) # Exploit learned values
+            action = np.argmax(q_table[state]/q_normalize[state]) # Exploit learned values
 
         #print("ACTION",action)
         action, next_state, reward, done, info = env.step(action) 
@@ -62,11 +63,12 @@ for i in range(100):
         
         #print(info)
         
-        old_value = q_table[state, action]
-        next_max = np.max(q_table[next_state])
+        old_value = q_table[state, action]/q_normalize[state, action]
+        next_max = np.max(q_table[next_state]/q_normalize[next_state])
         
         new_value = (1 - alpha) * old_value + alpha * (reward + gamma * next_max)
         q_table[state, action] = new_value
+        q_normalize[state, action] += 1
         #print("Action", action, q_table[state])
 
         if reward == -10:
@@ -77,14 +79,16 @@ for i in range(100):
 
         # render
         count += 1
-        if count % 499 == 0:
+        if count % 999 == 0:
             env.render()
 
     print(time.time() - start_time)           
-        
-
 
 print(q_table)
+print(q_normalize)
+print(q_table/q_normalize)
+
 np.savetxt('test/qtable.txt', q_table, delimiter=',')
+np.savetxt('test/qtable_normalized.txt', q_table/q_normalize, delimiter=',')
 
 print("Training finished.\n")

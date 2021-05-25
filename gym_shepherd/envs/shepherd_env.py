@@ -54,11 +54,11 @@ class ShepherdEnv(gym.Env):
         self.field_size = 60
         self.herd, self.dog = self.init_sheep_table()
 
-        self.dog_move_size = 5
+        self.dog_move_size = 4
         self.dog_influence = int(self.field_size/4)
         self.dog_influence_rm = int(self.field_size/4)
 
-        self.max_num_of_steps = 1000
+        self.max_num_of_steps = 6000
         self.target_distance = int((int(sqrt(self.sheep_num)) + 1)/2)+1
         self.calculated_distance = sqrt(2)*self.field_size # za 20 kvadratov je to 18
 
@@ -239,7 +239,7 @@ class ShepherdEnv(gym.Env):
         dog_direction = self.dog_direction()
         dog_sheep = self.closenes_sheep_dog() 
         sheep_sheep = self.closenes_sheep_sheep()
-        reward = 0.1 * in_house + 0.1 * dog_sheep + sheep_sheep
+        reward = 0.03 * in_house + sheep_sheep #  0.1 * in_house + 0.1 * dog_sheep +
         if self.current_step % 499 == 0:
             print("Reward: "+ str(0.1 *in_house) +" "+ str(0.1 *dog_sheep) +" "+ str(sheep_sheep)+"-> "+ str(reward))
         return reward
@@ -479,7 +479,7 @@ class ShepherdEnv(gym.Env):
     def fake_random(self):
         herd = self.herd
         new_herd = []
-        e = 0.03
+        e = 0.04
         for i in range(len(herd)):
             if random.uniform(0, 1) < e:
                 new_herd.append(self.sheep_move_to_center(herd[i]))

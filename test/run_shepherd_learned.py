@@ -17,14 +17,14 @@ env.render()
 
 #q_table = np.zeros([env.observation_space.n, env.action_space.n])
 # TODO: read table
-q_table = np.loadtxt('test/qtable_learned.txt', delimiter=',')
+q_table = np.loadtxt('test/qtable_learned_v1.txt', delimiter=',')
 print(q_table)
 
 # Hyperparameters
 
 alpha = 0.2
 gamma = 0.6 #
-epsilon = 0
+epsilon = 0.05
 eps = epsilon
 
 # For plotting metrics
